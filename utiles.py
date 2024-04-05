@@ -1,6 +1,6 @@
 import json
 import os
-
+import datetime
 PATH = os.path.dirname(os.path.realpath(__file__)) + "/"
 
 class HandleJsonFiles:
@@ -11,7 +11,6 @@ class HandleJsonFiles:
                 self.save_data(default)
             else:
                 self.save_data({})
-
 
     def save_data(self, data):
         with open(self.file_path, 'w') as f:
@@ -34,5 +33,14 @@ class HandleJsonFiles:
         data = self.read_data()
         return data.keys()
 
+def seconds2minuits_seconds(seconds):
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return int(hours), int(minutes), int(seconds)
+
 
 json_file = HandleJsonFiles(PATH + "times.json")
+today = datetime.datetime.today()
+print(today.year, today.month, today.day)
+zero_day = datetime.datetime(today.year, today.month, today.day)
+print(zero_day.timestamp())
