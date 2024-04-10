@@ -79,6 +79,16 @@ QScrollBar:vertical {
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
+       <widget class="QLabel" name="prop_label">
+        <property name="text">
+         <string>prop</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QLabel" name="time_label">
         <property name="text">
          <string>00:00:00</string>

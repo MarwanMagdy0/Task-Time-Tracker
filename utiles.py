@@ -33,14 +33,36 @@ class HandleJsonFiles:
         data = self.read_data()
         return data.keys()
 
-def seconds2minuits_seconds(seconds):
+def seconds2hours_minuits_seconds(seconds):
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     return int(hours), int(minutes), int(seconds)
 
 
 json_file = HandleJsonFiles(PATH + "times.json")
-today = datetime.datetime.today()
-print(today.year, today.month, today.day)
-zero_day = datetime.datetime(today.year, today.month, today.day)
-print(zero_day.timestamp())
+def get_hour_timestamp():
+    now = datetime.datetime.now()
+    # print(now.year, now.month, now.day, now.hour)
+    zero_minuit = datetime.datetime(now.year, now.month, now.day, now.hour)
+    return str(int(zero_minuit.timestamp()))
+
+def get_timestamps_inrange_from_today(list_of_timestamps, days_before, days_after):
+    now = datetime.datetime.now()
+    today_start = datetime.datetime(now.year, now.month, now.day, 0, 0, 0)
+    today_end = datetime.datetime(now.year, now.month, now.day, 23, 59, 59)
+
+    # Calculate start and end date range
+    start_range = today_start - datetime.timedelta(days=days_before)
+    end_range = today_end + datetime.timedelta(days=days_after)
+
+    timestamps_in_range = []
+    for timestamp in list_of_timestamps:
+        if start_range <= datetime.datetime.fromtimestamp(int(timestamp)) <= end_range:
+            timestamps_in_range.append(timestamp)
+
+    return timestamps_in_range
+
+
+if __name__ == "__main__":
+    print(get_hour_timestamp())
+    print(get_timestamps_inrange_from_today(["1712739600"], 0, 0))
