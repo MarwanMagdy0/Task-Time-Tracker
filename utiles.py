@@ -34,9 +34,13 @@ class HandleJsonFiles:
         return data.keys()
 
 def seconds2hours_minuits_seconds(seconds):
+    const = 1
+    if seconds < 0:
+        const = -1
+        seconds = abs(seconds)
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
-    return int(hours), int(minutes), int(seconds)
+    return int(const * hours), int(const * minutes), int(const * seconds)
 
 
 json_file = HandleJsonFiles(PATH + "times.json")

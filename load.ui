@@ -81,7 +81,7 @@ QScrollBar:vertical {
       <item>
        <widget class="QLabel" name="prop_label">
         <property name="text">
-         <string>prop</string>
+         <string/>
         </property>
         <property name="alignment">
          <set>Qt::AlignCenter</set>

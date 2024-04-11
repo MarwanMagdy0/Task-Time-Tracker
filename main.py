@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QTreeWidget, QTreeWidgetItem
-from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.uic import loadUi
 from utiles import *
 
@@ -12,26 +12,41 @@ class UI(QMainWindow):
     time_label : QLabel
     prop_label : QLabel
     treeWidget : QTreeWidget
+    add_task_button        : QPushButton
+    add_subtask_button     : QPushButton
+    remove_selected_button : QPushButton
+    minus_button           : QPushButton
+    plus_button            : QPushButton
+    play_pause_button      : QPushButton
     def __init__(self):
         super().__init__()
         loadUi(PATH + "load.ui", self)
-        self.treeWidget.itemClicked.connect(self.handle_item_double_click)
+        self.init_widgets()
         self.init_timer()
         self.load_data()
         self.selected_task = None
-        print(self.get_childs("1"))
-    
+
+    def init_widgets(self):
+        self.treeWidget.itemClicked.connect(self.handle_item_click)
+        self.treeWidget.itemChanged.connect(self.on_item_changed)
+        self.add_task_button.clicked.connect(self.add_task_method)
+        self.add_subtask_button.clicked.connect(self.add_sub_task_method)
+        self.remove_selected_button.clicked.connect(self.remove_selected_method)
+        self.play_pause_button.clicked.connect(self.play_pause_method)
+        self.minus_button.clicked.connect(lambda: self.edit_time_method(-60))
+        self.plus_button.clicked.connect(lambda: self.edit_time_method(60))
+
     def init_timer(self):
         self.timer = QTimer()
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.update_time)
-        self.timer.start()
 
     def load_data(self):
         all_data = json_file.read_data()
         for item_key, item_data in all_data.items():
             if item_data["top-level"] and item_data["display"]:
                 item = CustomTreeItem([item_data["name"]], item_key)
+                item.setFlags(item.flags() | Qt.ItemIsEditable)
                 self.treeWidget.insertTopLevelItems(self.treeWidget.topLevelItemCount(), [item])
                 self.load_childs(item, item_data["childs"])
     
@@ -40,19 +55,27 @@ class UI(QMainWindow):
         for child_key in childs:
             if all_data[child_key]["display"]:
                 sub_item = CustomTreeItem([all_data[child_key]["name"]], child_key)
+                sub_item.setFlags(item.flags() | Qt.ItemIsEditable)
                 item.addChild(sub_item)
                 self.load_childs(sub_item, all_data[child_key]["childs"])
 
-    def handle_item_double_click(self, item : CustomTreeItem, column):
+    def handle_item_click(self, item : CustomTreeItem, column):
         self.selected_task = item
         self.prop_label.setText(item.text(0))
         self.update_time(0)
+    
+    def on_item_changed(self, item : CustomTreeItem, column):
+        data = json_file.read_data()
+        data[item.key]["name"] = item.text(0)
+        json_file.save_data(data)
 
     def update_time(self, added_time = 1):
         if self.selected_task is None:
             return
         key = self.selected_task.key
         data = json_file.read_data()
+        if key not in data.keys():
+            return
         timestamps = data[key]["timestamps"]
         if not timestamps.get(get_hour_timestamp(), False):
             timestamps[get_hour_timestamp()] = 0
@@ -76,6 +99,74 @@ class UI(QMainWindow):
                 children.append(child_key)
                 children.extend(self.get_childs(child_key))
         return children
+    
+    def play_pause_method(self):
+        if self.play_pause_button.text() == ">":
+            self.play_pause_button.setText("||")
+            self.timer.start()
+        
+        else:
+            self.play_pause_button.setText(">")
+            self.timer.stop()
+        
+    def edit_time_method(self, delta_time):
+        if self.selected_task is None:
+            return
+        key = self.selected_task.key
+        data = json_file.read_data()
+        if key not in data.keys():
+            return
+        timestamps = data[key]["timestamps"]
+        if not timestamps.get(get_hour_timestamp(), False):
+            timestamps[get_hour_timestamp()] = 0
+        timestamps[get_hour_timestamp()] += delta_time
+        json_file.save_data(data)
+        self.update_time(0)
+
+    def add_task_method(self):
+        data = json_file.read_data()
+        key = len(data)
+        item = CustomTreeItem([f"task_{key}"], f"{key}")
+        item.setFlags(item.flags() | Qt.ItemIsEditable)
+        self.treeWidget.insertTopLevelItems(self.treeWidget.topLevelItemCount(), [item])
+        data[f"{key}"] ={"name": f"task_{key}", "timestamps": {}, "display": True, "top-level": True, "childs": []}
+        json_file.save_data(data)
+    
+    def add_sub_task_method(self):
+        if self.selected_task is None:
+            return
+        data = json_file.read_data()
+        key = len(data)
+        sub_item = CustomTreeItem([f"task_{key}"], f"{key}")
+        sub_item.setFlags(sub_item.flags() | Qt.ItemIsEditable)
+        self.selected_task.addChild(sub_item)
+        data[f"{key}"] ={"name": f"task_{key}", "timestamps": {}, "display": True, "top-level": False, "childs": []}
+        data[f"{self.selected_task.key}"]["childs"].append(f"{key}")
+        json_file.save_data(data)
+    
+    def remove_selected_method(self):
+        if self.selected_task is None:
+            return
+        data = json_file.read_data()
+
+        # to remove item from the ui and its key and remove its key from its parent
+        parent = self.selected_task.parent()
+        if parent is not None:
+            parent.removeChild(self.selected_task)
+            parent_key = parent.key
+            print(data[parent_key]["childs"])
+            data[parent_key]["childs"].remove(self.selected_task.key)
+        else: # if it is a top level item
+            index = self.treeWidget.indexOfTopLevelItem(self.selected_task)
+            self.treeWidget.takeTopLevelItem(index)
+        data.pop(self.selected_task.key)
+
+        # remove all childs to this item
+        for child_key in self.get_childs(self.selected_task.key):
+            data.pop(child_key)
+
+        json_file.save_data(data)
+        self.selected_task = parent
 
 if __name__ == "__main__":
     app = QApplication([])
