@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>810</width>
+    <height>242</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">* {
+	font: 63 20pt &quot;DejaVu Sans Mono&quot;;
+	background-color: #17181d;
+	color: #ffffff;
+}
+
+QPushButton {
+	font: 63 20pt &quot;DejaVu Sans Mono&quot;;
+	background-color: #e5e5e5;
+	border: 1px solid #e5e5e5;
+	border-radius: 5px;
+	color: #17181d;
+}
+QPushButton:hover {
+    border-radius:5px;
+	border: 1px solid #a0a0a0;
+	background-color: #a0a0a0;
+    color: 17181d;
+}
+
+QPushButton:disabled {
+	border-radius:5px;
+	border: 1px solid gray;
+    background-color: gray;
+    color: 17181d;
+}
+
+QPushButton:pressed {
+    border-radius:5px;
+	border: 1px solid #808080;
+	background-color: #808080;
+    color: 17181d;
+}
+</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QLabel" name="message_label">
+      <property name="text">
+       <string>message</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QLabel" name="timer_label">
+      <property name="text">
+       <string>timer</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QPushButton" name="submit">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Ignored">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="text">
+       <string>I'm Here</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

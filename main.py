@@ -1,7 +1,41 @@
 from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton
-from PyQt5.QtCore import QTimer, Qt
+from PyQt5.QtCore import QTimer, Qt, QThread
 from PyQt5.uic import loadUi
+from PIL import Image
+import pystray
 from utiles import *
+from pop_up import PopupUI
+
+class TrayThread(QThread):
+    def __init__(self, ui):
+        super().__init__()
+        self.ui = ui
+    
+    def on_left_click(self):
+        """
+        this method show the screen of the program
+        """
+        self.ui.show()
+        self.ui.activateWindow()
+    
+    def on_right_click(self):
+        """
+        this method closes the entire program
+        """
+        self.ui.close()
+
+    def run(self):
+        image = Image.open(PATH + "logo.png")
+
+        # Create a menu item with the left-click event handler
+        menu = (pystray.MenuItem("show", self.on_left_click, default = True),
+                pystray.MenuItem("exit", self.on_right_click))
+
+        # Create the tray icon with the menu
+        icon = pystray.Icon("tray_icon", image, "Tray Icon", menu)
+
+        # Run the tray icon
+        icon.run()
 
 class CustomTreeItem(QTreeWidgetItem):
     def __init__(self, item, key):
@@ -22,9 +56,13 @@ class UI(QMainWindow):
         super().__init__()
         loadUi(PATH + "load.ui", self)
         self.init_widgets()
-        self.init_timer()
+        self.init_timers()
         self.load_data()
+        self.pop_up = PopupUI()
+        self.pop_up.time_finished.connect(self.time_finished_method)
         self.selected_task = None
+        self.tray_thread = TrayThread(self)
+        self.tray_thread.start()
 
     def init_widgets(self):
         self.treeWidget.itemClicked.connect(self.handle_item_click)
@@ -36,10 +74,15 @@ class UI(QMainWindow):
         self.minus_button.clicked.connect(lambda: self.edit_time_method(-60))
         self.plus_button.clicked.connect(lambda: self.edit_time_method(60))
 
-    def init_timer(self):
+    def init_timers(self):
         self.timer = QTimer()
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.update_time)
+
+        self.evert20minuit_timer = QTimer()
+        self.evert20minuit_timer.setInterval(40000)
+        self.evert20minuit_timer.timeout.connect(self.check_user_status)
+        self.evert20minuit_timer.start()
 
     def load_data(self):
         all_data = json_file.read_data()
@@ -90,6 +133,33 @@ class UI(QMainWindow):
         
         h,m,s = seconds2hours_minuits_seconds(sum_of_times)
         self.time_label.setText(f"{h:02}:{m:02}:{s:02}")
+    
+    def check_user_status(self):
+        print("checked")
+        if self.selected_task is None:
+            return
+        if self.play_pause_button.text() == ">":
+            self.pop_up.are_you_working_method()
+        else:
+            self.pop_up.are_you_still_working_method()
+        self.pop_up.show()
+    
+    def time_finished_method(self):
+        if self.selected_task is None:
+            return
+        key = self.selected_task.key
+        data = json_file.read_data()
+        if key not in data.keys():
+            return
+        timestamps = data[key]["timestamps"]
+        if not timestamps.get(get_hour_timestamp(), False):
+            timestamps[get_hour_timestamp()] = 0
+        
+        if self.play_pause_button.text() == "||":
+            # if he is not working 10 min will be removed from his working time
+            timestamps[get_hour_timestamp()] -= 10 * 60
+
+        json_file.save_data(data)
     
     def get_childs(self, key):
         children = []
@@ -167,9 +237,21 @@ class UI(QMainWindow):
 
         json_file.save_data(data)
         self.selected_task = parent
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Escape:
+            self.hide()
+        else:
+            super().keyPressEvent(event)
+    
+    def closeEvent(self, event):
+        if event.spontaneous():
+            self.hide()
+            event.ignore()
+        else:
+            event.accept()
 
 if __name__ == "__main__":
     app = QApplication([])
     ui = UI()
-    ui.show()
     app.exec_()
