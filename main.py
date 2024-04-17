@@ -80,7 +80,7 @@ class UI(QMainWindow):
         self.timer.timeout.connect(self.update_time)
 
         self.evert20minuit_timer = QTimer()
-        self.evert20minuit_timer.setInterval(40000)
+        self.evert20minuit_timer.setInterval(20 * 60)
         self.evert20minuit_timer.timeout.connect(self.check_user_status)
         self.evert20minuit_timer.start()
 
@@ -158,6 +158,8 @@ class UI(QMainWindow):
         if self.play_pause_button.text() == "||":
             # if he is not working 10 min will be removed from his working time
             timestamps[get_hour_timestamp()] -= 10 * 60
+            self.play_pause_button.setText(">")
+            self.timer.stop()
 
         json_file.save_data(data)
     
