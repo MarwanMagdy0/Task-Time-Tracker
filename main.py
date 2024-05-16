@@ -60,6 +60,7 @@ class UI(QMainWindow):
         self.load_data()
         self.pop_up = PopupUI()
         self.pop_up.time_finished.connect(self.time_finished_method)
+        self.pop_up.yes_signal.connect(self.yes_button_selected)
         self.selected_task = None
         self.tray_thread = TrayThread(self)
         self.tray_thread.start()
@@ -135,14 +136,22 @@ class UI(QMainWindow):
         self.time_label.setText(f"{h:02}:{m:02}:{s:02}")
     
     def check_user_status(self):
-        print("checked")
         if self.selected_task is None:
             return
+        key = self.selected_task.key
+        data = json_file.read_data()
+        if key not in data.keys():
+            return
         if self.play_pause_button.text() == ">":
-            self.pop_up.are_you_working_method()
+            self.pop_up.are_you_working_method(data[key]["name"])
         else:
-            self.pop_up.are_you_still_working_method()
+            self.pop_up.are_you_still_working_method(data[key]["name"])
         self.pop_up.show()
+    
+    def yes_button_selected(self):
+        if self.play_pause_button.text() == ">":
+            self.play_pause_button.setText("||")
+            self.timer.start()
     
     def time_finished_method(self):
         if self.selected_task is None:
@@ -162,6 +171,7 @@ class UI(QMainWindow):
             self.timer.stop()
 
         json_file.save_data(data)
+        self.update_time(0)
     
     def get_childs(self, key):
         children = []
