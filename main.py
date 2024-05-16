@@ -80,7 +80,7 @@ class UI(QMainWindow):
         self.timer.timeout.connect(self.update_time)
 
         self.evert20minuit_timer = QTimer()
-        self.evert20minuit_timer.setInterval(20 * 60)
+        self.evert20minuit_timer.setInterval(20 * 60 * 1000)
         self.evert20minuit_timer.timeout.connect(self.check_user_status)
         self.evert20minuit_timer.start()
 

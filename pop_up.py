@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QPushButton, QDesktopWidget
 from PyQt5.QtCore import QTimer, pyqtSignal, Qt
 from PyQt5.uic import loadUi
 import os
@@ -17,6 +17,7 @@ class PopupUI(QMainWindow):
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.timer_method)
         self.time_variable = 30
+        self.center()
         
     def are_you_still_working_method(self):
         self.time_variable = 30
@@ -44,6 +45,15 @@ class PopupUI(QMainWindow):
             self.hide()
         else: # for testing
             self.close()
+    
+    def center(self):
+        # Get the geometry of the screen
+        screen = QDesktopWidget().screenGeometry()
+        # Calculate the center point of the screen
+        x = (screen.width() - self.width()) // 2
+        y = (screen.height() - self.height()) // 2
+        # Move the window to the center of the screen
+        self.move(x, y)
 
 
 if __name__ == "__main__":
