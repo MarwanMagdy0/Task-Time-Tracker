@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton
+from PyQt5.QtWidgets import QMainWindow, QApplication, QLabel, QTreeWidget, QTreeWidgetItem, QPushButton, QCheckBox
 from PyQt5.QtCore import QTimer, Qt, QThread
 from PyQt5.uic import loadUi
 from PIL import Image
@@ -52,6 +52,7 @@ class UI(QMainWindow):
     minus_button           : QPushButton
     plus_button            : QPushButton
     play_pause_button      : QPushButton
+    show_dragable : QCheckBox
     def __init__(self):
         super().__init__()
         loadUi(PATH + "load.ui", self)
@@ -225,8 +226,9 @@ class UI(QMainWindow):
     def closeEvent(self, event):
         if event.spontaneous():
             self.hide()
-            self.dragable_counter_window.setWindowOpacity(0.1)
-            self.dragable_counter_window.show()
+            if self.show_dragable.isChecked():
+                self.dragable_counter_window.setWindowOpacity(0.1)
+                self.dragable_counter_window.show()
             event.ignore()
         else:
             event.accept()
