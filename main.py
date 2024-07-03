@@ -218,8 +218,9 @@ class UI(QMainWindow):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.hide()
-            self.dragable_counter_window.setWindowOpacity(0.1)
-            self.dragable_counter_window.show()
+            if self.show_dragable.isChecked():
+                self.dragable_counter_window.setWindowOpacity(0.1)
+                self.dragable_counter_window.show()
         else:
             super().keyPressEvent(event)
     
