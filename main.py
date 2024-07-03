@@ -4,7 +4,7 @@ from PyQt5.uic import loadUi
 from PIL import Image
 import pystray
 from utiles import *
-from pop_up import PopupUI
+from dragable_counter import DragableCounterWindow
 
 class TrayThread(QThread):
     def __init__(self, ui):
@@ -55,15 +55,14 @@ class UI(QMainWindow):
     def __init__(self):
         super().__init__()
         loadUi(PATH + "load.ui", self)
-        self.init_widgets()
-        self.init_timers()
-        self.load_data()
-        self.pop_up = PopupUI()
-        self.pop_up.time_finished.connect(self.time_finished_method)
-        self.pop_up.yes_signal.connect(self.yes_button_selected)
         self.selected_task = None
         self.tray_thread = TrayThread(self)
         self.tray_thread.start()
+        self.dragable_counter_window = DragableCounterWindow()
+        self.dragable_counter_window.escape_pressed.connect(lambda: [self.show(), self.dragable_counter_window.hide()])
+        self.init_widgets()
+        self.init_timers()
+        self.load_data()
 
     def init_widgets(self):
         self.treeWidget.itemClicked.connect(self.handle_item_click)
@@ -71,6 +70,10 @@ class UI(QMainWindow):
         self.add_task_button.clicked.connect(self.add_task_method)
         self.add_subtask_button.clicked.connect(self.add_sub_task_method)
         self.remove_selected_button.clicked.connect(self.remove_selected_method)
+        self.dragable_counter_window.play_pause_button.clicked.connect(self.play_pause_method)
+        self.dragable_counter_window.minus_button.clicked.connect(lambda: self.edit_time_method(-60))
+        self.dragable_counter_window.plus_button.clicked.connect(lambda: self.edit_time_method(60))
+
         self.play_pause_button.clicked.connect(self.play_pause_method)
         self.minus_button.clicked.connect(lambda: self.edit_time_method(-60))
         self.plus_button.clicked.connect(lambda: self.edit_time_method(60))
@@ -79,11 +82,6 @@ class UI(QMainWindow):
         self.timer = QTimer()
         self.timer.setInterval(1000)
         self.timer.timeout.connect(self.update_time)
-
-        self.evert20minuit_timer = QTimer()
-        self.evert20minuit_timer.setInterval(20 * 60 * 1000)
-        self.evert20minuit_timer.timeout.connect(self.check_user_status)
-        self.evert20minuit_timer.start()
 
     def load_data(self):
         all_data = json_file.read_data()
@@ -106,6 +104,7 @@ class UI(QMainWindow):
     def handle_item_click(self, item : CustomTreeItem, column):
         self.selected_task = item
         self.prop_label.setText(item.text(0))
+        self.dragable_counter_window.prop_label.setText(item.text(0))
         self.update_time(0)
     
     def on_item_changed(self, item : CustomTreeItem, column):
@@ -134,44 +133,7 @@ class UI(QMainWindow):
         
         h,m,s = seconds2hours_minuits_seconds(sum_of_times)
         self.time_label.setText(f"{h:02}:{m:02}:{s:02}")
-    
-    def check_user_status(self):
-        if self.selected_task is None:
-            return
-        key = self.selected_task.key
-        data = json_file.read_data()
-        if key not in data.keys():
-            return
-        if self.play_pause_button.text() == ">":
-            self.pop_up.are_you_working_method(data[key]["name"])
-        else:
-            self.pop_up.are_you_still_working_method(data[key]["name"])
-        self.pop_up.show()
-    
-    def yes_button_selected(self):
-        if self.play_pause_button.text() == ">":
-            self.play_pause_button.setText("||")
-            self.timer.start()
-    
-    def time_finished_method(self):
-        if self.selected_task is None:
-            return
-        key = self.selected_task.key
-        data = json_file.read_data()
-        if key not in data.keys():
-            return
-        timestamps = data[key]["timestamps"]
-        if not timestamps.get(get_hour_timestamp(), False):
-            timestamps[get_hour_timestamp()] = 0
-        
-        if self.play_pause_button.text() == "||":
-            # if he is not working 10 min will be removed from his working time
-            timestamps[get_hour_timestamp()] -= 10 * 60
-            self.play_pause_button.setText(">")
-            self.timer.stop()
-
-        json_file.save_data(data)
-        self.update_time(0)
+        self.dragable_counter_window.time_label.setText(f"{h:02}:{m:02}:{s:02}")
     
     def get_childs(self, key):
         children = []
@@ -185,10 +147,12 @@ class UI(QMainWindow):
     def play_pause_method(self):
         if self.play_pause_button.text() == ">":
             self.play_pause_button.setText("||")
+            self.dragable_counter_window.play_pause_button.setText("||")
             self.timer.start()
         
         else:
             self.play_pause_button.setText(">")
+            self.dragable_counter_window.play_pause_button.setText(">")
             self.timer.stop()
         
     def edit_time_method(self, delta_time):
@@ -253,12 +217,16 @@ class UI(QMainWindow):
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_Escape:
             self.hide()
+            self.dragable_counter_window.setWindowOpacity(0.1)
+            self.dragable_counter_window.show()
         else:
             super().keyPressEvent(event)
     
     def closeEvent(self, event):
         if event.spontaneous():
             self.hide()
+            self.dragable_counter_window.setWindowOpacity(0.1)
+            self.dragable_counter_window.show()
             event.ignore()
         else:
             event.accept()
