@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QPushButton
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal
 from PyQt5.uic import loadUi
-
+from utiles import PATH
 class DragableCounterWindow(QDialog):
     escape_pressed = pyqtSignal()
     prop_label : QLabel
@@ -13,7 +13,7 @@ class DragableCounterWindow(QDialog):
 
     def __init__(self):
         super().__init__()
-        loadUi("dragable_counter.ui", self)
+        loadUi(PATH + "dragable_counter.ui", self)
         self.setContentsMargins(0, 0, 0, 0)
         self.layout().setContentsMargins(0, 0, 0, 0)
         self.layout().setSpacing(1)
